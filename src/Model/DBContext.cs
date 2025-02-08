@@ -25,6 +25,9 @@ public class DBContext : DbContext {
     public DbSet<Party> Parties { get; set; } = null!;
     public DbSet<Neighborhood> Neighborhoods { get; set; } = null!;
     // we had a brief debate on whether it's neighborhoods or neighborheed
+    public DbSet<Group> Groups { get; set; } = null!;
+    public DbSet<Rating> Ratings { get; set; } = null!;
+    public DbSet<RatingRank> RatingRanks { get; set; } = null!;
 
     private readonly IOptions<ApiServerConfig> config;
 
@@ -114,6 +117,9 @@ public class DBContext : DbContext {
         builder.Entity<Viking>().HasMany(v => v.TaskStatuses)
             .WithOne(e => e.Viking);
 
+        builder.Entity<Viking>().HasMany(v => v.AchievementTaskStates)
+            .WithOne(e => e.Viking);
+
         builder.Entity<Viking>().HasOne(v => v.SelectedDragon)
             .WithOne()
             .HasForeignKey<Viking>(e => e.SelectedDragonId);
@@ -135,6 +141,12 @@ public class DBContext : DbContext {
 
         builder.Entity<Viking>().HasOne(v => v.Neighborhood)
             .WithOne(e => e.Viking);
+
+        builder.Entity<Viking>().HasMany(v => v.Groups)
+            .WithMany(e => e.Vikings);
+
+        builder.Entity<Viking>().HasMany(v => v.Ratings)
+            .WithOne(r => r.Viking);
 
         // Dragons
         builder.Entity<Dragon>().HasOne(d => d.Viking)
@@ -218,6 +230,10 @@ public class DBContext : DbContext {
             .WithMany(e => e.MissionStates)
             .HasForeignKey(e => e.VikingId);
 
+        builder.Entity<AchievementTaskState>().HasOne(m => m.Viking)
+            .WithMany(e => e.AchievementTaskStates)
+            .HasForeignKey(e => e.VikingId);
+
         builder.Entity<AchievementPoints>().HasKey(e => new { e.VikingId, e.Type });
 
         builder.Entity<AchievementPoints>()
@@ -252,5 +268,21 @@ public class DBContext : DbContext {
         builder.Entity<Neighborhood>().HasOne(r => r.Viking)
             .WithOne(e => e.Neighborhood)
             .HasForeignKey<Neighborhood>(e => e.VikingId);
+
+        // Groups
+        builder.Entity<Group>().HasMany(r => r.Vikings)
+            .WithMany(e => e.Groups);
+
+        // Rating
+        builder.Entity<Rating>().HasOne(r => r.Viking)
+            .WithMany(v => v.Ratings)
+            .HasForeignKey(r => r.VikingId);
+
+        builder.Entity<Rating>().HasOne(r => r.Rank)
+            .WithMany(rr => rr.Ratings)
+            .HasForeignKey(r => r.RankId);
+
+        builder.Entity<RatingRank>().HasMany(rr => rr.Ratings)
+            .WithOne(r => r.Rank);
     }
 }
